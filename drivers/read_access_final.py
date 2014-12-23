@@ -1,5 +1,4 @@
 from smap import driver, util
-from smap import readingAccess as md
 import csv
 import pyodbc
 import time
