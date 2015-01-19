@@ -12,8 +12,7 @@ class ReadODBC(driver.SmapDriver):
 
 
     def setup(self, opts):
-
-
+        #Adding time series
         self.location = opts.get('Location', 'IIIT Delhi')
 
         self.add_timeseries('/Esito-GO','Units')
@@ -28,8 +27,8 @@ class ReadODBC(driver.SmapDriver):
         self.add_timeseries('/Sur_Esito-No-GO','Units')
 
     def start(self):
+        #Calling read_file method
         util.periodicSequentialCall(self.read_file).start(10)
-
 
     def read_file(self):
         ra = self.main_fn()
@@ -37,7 +36,7 @@ class ReadODBC(driver.SmapDriver):
         for t in range(1, len(self.timed), 1):
             tim = self.timed[t]
             if(self.timed[t] > 1):
-
+                #Adding read readings for each stream to be sent
                 self.add('/Esito-GO',tim , self.esito_go[t])
                 self.add('/Esito-No-GO',tim , self.esito_no_go[t])
                 self.add('/Res_Esito-GO',tim , self.res_esito_go[t])
@@ -49,20 +48,20 @@ class ReadODBC(driver.SmapDriver):
                 self.add('/Sur_Esito-GO',tim , self.sur_esito_go[t])
                 self.add('/Sur_Esito-No-GO',tim , self.sur_esito_no_go[t])
 
-
+                #Calling method to log previously sent readings
                 self.write_prev_log( self.timed[t], self.esito_go[t], self.esito_no_go[t], self.res_esito_go[t], self.res_esito_no_go[t],
                     self.rot_esito_go[t], self.rot_esito_no_go[t], self.rig_esito_go[t], self.rig_esito_no_go[t], self.sur_esito_go[t], self.sur_esito_no_go[t], self.Ides[t])
-
-
-
 
     def main_fn(self):
         try:
             prevtime = 0000000001
+            #Setting initial value for each stream
             self.init_ial()
+            #Getting previously sent value for each stream
             ret =  self.set_prev_log()
             print 'ret', ret
             if (ret == 1):
+                #If previous value found, Read access file for new readings
                 rowes = self.read_access_file(self.timed[-1:][0], self.prev_id)
                 for i in range(0, len(rowes)-1,  1):
                     tmp = datetime(rowes[i].Data.year, rowes[i].Data.month, rowes[i].Data.day, rowes[i].Ora.hour, rowes[i].Ora.minute, rowes[i].Ora.second)
@@ -83,7 +82,7 @@ class ReadODBC(driver.SmapDriver):
 
                     self.timed.append(timestamp)
                     self.Ides.append(rowes[i].Id)
-
+                    #Updating read value to arrays for each stream
                     if esito == 'GO':
                         self.esito_go.append(self.esito_go[-1:][0] + 1)
                         self.esito_no_go.append(self.esito_no_go[-1:][0])
@@ -138,6 +137,7 @@ class ReadODBC(driver.SmapDriver):
             print 'Unknown Error: '+exp.__str__()
 
     def init_ial(self):
+        #Initialize streams in for the first time
         self.timestamp = 0000000001
         self.timectr = 1
         self.timed=[0000000001]
@@ -169,6 +169,7 @@ class ReadODBC(driver.SmapDriver):
 
     def set_prev_log(self):
         try:
+            #Reading previous values for each stream if present
             print 'Entered prev log'
             f = open('last_readings.csv','r')
 
@@ -197,6 +198,7 @@ class ReadODBC(driver.SmapDriver):
 
     def read_access_file(self, tm, Id_s):
         try:
+            #Function to read access file for reading and returns it as an access object
             tm = int(tm)
             dater = datetime.fromtimestamp(tm).strftime('%d/%m/%Y')
             timer = datetime.fromtimestamp(tm).strftime('%H:%M')
@@ -215,6 +217,7 @@ class ReadODBC(driver.SmapDriver):
 
     def write_prev_log(self, timers, esito_go, esito_no_go, res_esito_go, res_esito_no_go, rot_esito_go, rot_esito_no_go, rig_esito_go, rig_esito_no_go, sur_esito_go, sur_esito_no_go, id):
         try:
+            #OverWriting previously sent value to csv log 
             f = open('last_readings.csv','w')
 
             row = str(timers)+','+str(esito_go)+','+str(esito_no_go)+','+str(res_esito_go)+','+str(res_esito_no_go)+','+str(rot_esito_go)+','+str(rot_esito_no_go)
